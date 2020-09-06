@@ -6,7 +6,7 @@
 Download video/audio from Youtube 
 
 Requirement:
-1. PyQt5=5.9.2
+1. PyQt5=5.15.2
 2. Python >= 3.6
 3. Pytube: pip install git+https://gitlab.com/obuilds/public/pytube@ob-v1
 4. ffmpeg-python 
@@ -21,6 +21,7 @@ import ffmpeg
 import os
 import urllib.request
 import re
+import csv
     
 
 class Yt_Downloader(QWidget):
@@ -30,6 +31,7 @@ class Yt_Downloader(QWidget):
 
     def UI(self):
 
+        # input youtube urls 
         self.label_urls = QLabel('Youtube Urls (support multiple urls):', self)
         self.label_urls.setGeometry(30,25,290,30)
         self.label_urls.setStyleSheet("color: rgba(200,201,217,255);")
@@ -39,6 +41,7 @@ class Yt_Downloader(QWidget):
         self.textbox.setStyleSheet("background-color: rgba(25,27,50,255);\
                                     color: rgba(200,201,217,255);")
 
+        # set downloading format
         self.radio_btn1 = QRadioButton('mp4',self)       
         self.radio_btn1.setChecked(True)
         self.download_format = 'mp4'
@@ -51,6 +54,15 @@ class Yt_Downloader(QWidget):
         self.radio_btn2.setStyleSheet("color: rgba(200,201,217,255);")
         self.radio_btn2.toggled.connect(lambda:self.radio_btn_state(self.radio_btn2))
 
+
+        # set csv file path
+        
+        self.csv_browser_btn = QPushButton('Load .csv',self)
+        self.csv_browser_btn.setGeometry(450,115, 80,30)
+        self.csv_browser_btn.clicked.connect(self.browser_csv)
+        self.csv_browser_btn.setStyleSheet("color: rgba(200,201,217,255);")
+
+        # set saved path in local computer
         self.label_savepath = QLabel('Saved path',self)
         self.label_savepath.setGeometry(30,155,180,30)
         self.label_savepath.setStyleSheet("color: rgba(200,201,217,255);")
@@ -66,6 +78,7 @@ class Yt_Downloader(QWidget):
         self.path_browser_btn.setStyleSheet("color: rgba(200,201,217,255);")
 
 
+        # set downloading progress bar
         self.label = QLabel('Downloading Progress', self)
         self.label.setGeometry(30,215,400,30)
         self.label.setStyleSheet("color: rgba(200,201,217,255);")
@@ -94,6 +107,21 @@ class Yt_Downloader(QWidget):
         self.setWindowTitle("Youtube Downloader")
         self.show()
 
+    def browser_csv(self):
+        #options = QFileDialog.Options()
+        self.csv_file  = QFileDialog.getOpenFileName(self, \
+                                                       "Select a file",\
+                                                       "",\
+                                                       "CSV Files (*.csv)")
+        if self.csv_file:
+            print('csv file: ',self.csv_file[0])
+        
+        with open(self.csv_file[0], 'r') as f:
+            for row in csv.reader(f):                
+                print(row[0])
+                self.textbox.insertPlainText(row[0]+'\n') 
+
+
     def browser(self):
         self.download_path = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
         self.savepath_text.setText(self.download_path)
@@ -117,11 +145,15 @@ class Yt_Downloader(QWidget):
                 #progressive = stream[i].progressive
         return itag
 
+
+
+
     def Action(self):
 
         textValues = self.textbox.toPlainText()
         urls = textValues.split('\n')
-        
+        if '' in urls:
+            urls.remove('')
         for i,url in enumerate(urls,start=1):
             #print('url: ',url)
           #if re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", url):  
